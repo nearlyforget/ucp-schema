@@ -2,4 +2,8 @@
 * @Universal-Commerce-Protocol/maintainers
 
 # Infrastructure & Tooling
-/.github/  @Universal-Commerce-Protocol/devops-maintainers
+/.github/    @Universal-Commerce-Protocol/devops-maintainers
+/Makefile    @Universal-Commerce-Protocol/devops-maintainers
+/.gitignore  @Universal-Commerce-Protocol/devops-maintainers
+/Cargo.toml  @Universal-Commerce-Protocol/devops-maintainers
+/Cargo.lock  @Universal-Commerce-Protocol/devops-maintainers
