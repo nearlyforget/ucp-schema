@@ -40,4 +40,4 @@ repos:
     rev: v2.4.1
     hooks:
       - id: codespell
-        args: ["--skip", "Cargo.lock"]
+        args: ["--skip", "Cargo.lock", "-L", "mor,tok,fpan,dpan"]
