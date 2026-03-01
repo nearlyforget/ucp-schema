@@ -5,6 +5,7 @@
 **The validator checks that specced fields are correct, but allows additional fields by design.**
 
 This is intentional:
+
 - The schema defines minimum requirements, not an exhaustive contract
 - Extensions add fields that base schemas don't know about
 - Forward compatibility requires tolerating unknown fields
@@ -12,33 +13,35 @@ This is intentional:
 
 If a payload has `{ "id": "123", "custom_field": "foo" }` and the schema only defines `id`, validation passes. The `custom_field` is ignored—not rejected.
 
-Use `--strict=true` only when you need a closed contract:
+Use `--strict` only when you need a closed contract:
+
 - Catching field name typos during development
 - Systems where the schema is the complete specification
 
 ---
 
-## What's the difference between `--schema` and `--schema-base`?
+## What's the difference between `--schema` and `--schema-local-base`?
 
 **They're different validation modes:**
 
-| Flag | Mode | Schema source |
-|------|------|---------------|
-| (none) | Self-describing | Fetches URLs from `ucp.capabilities` |
-| `--schema-base ./dir` | Self-describing + local | Maps capability URLs to local files |
-| `--schema file.json` | Explicit | Uses specified schema, ignores capabilities |
+| Flag                        | Mode                    | Schema source                               |
+| --------------------------- | ----------------------- | ------------------------------------------- |
+| (none)                      | Self-describing         | Fetches URLs from `ucp.capabilities`        |
+| `--schema-local-base ./dir` | Self-describing + local | Maps capability URLs to local files         |
+| `--schema file.json`        | Explicit                | Uses specified schema, ignores capabilities |
 
-`--schema-base` is useful for:
+`--schema-local-base` is useful for:
+
 - Offline testing
 - Local development before publishing schemas
 - Testing schema changes against real payloads
 
 **How it works:** The flag extracts the URL path and maps it to a local file. This works for any domain—not just `ucp.dev`:
 
-| Schema URL | Local path (`--schema-base ./local`) |
-|------------|--------------------------------------|
-| `https://ucp.dev/schemas/shopping/checkout.json` | `./local/schemas/shopping/checkout.json` |
-| `https://extensions.3p.com/schemas/loyalty.json` | `./local/schemas/loyalty.json` |
+| Schema URL                                       | Local path (`--schema-local-base ./local`) |
+| ------------------------------------------------ | ------------------------------------------ |
+| `https://ucp.dev/schemas/shopping/checkout.json` | `./local/schemas/shopping/checkout.json`   |
+| `https://extensions.3p.com/schemas/loyalty.json` | `./local/schemas/loyalty.json`             |
 
 This means you can develop and test third-party extensions locally before publishing.
 
@@ -48,13 +51,13 @@ This means you can develop and test third-party extensions locally before publis
 
 **The validator infers direction from payload structure:**
 
-| Payload has | Detected direction |
-|-------------|-------------------|
-| `ucp.capabilities` | Response |
-| `ucp.meta.profile` | Request |
-| Neither | Error (must specify `--request` or `--response`) |
+| Payload has        | Detected direction                               |
+| ------------------ | ------------------------------------------------ |
+| `ucp.capabilities` | Response                                         |
+| `meta.profile`     | Request                                          |
+| Neither            | Error (must specify `--request` or `--response`) |
 
-This only applies to `validate`. The `resolve` command always requires explicit `--request` or `--response`.
+This applies to both `validate` and `resolve` when the input is a self-describing payload. When resolving a plain schema file, explicit `--request` or `--response` is required.
 
 ---
 
@@ -75,6 +78,7 @@ Typos and version mismatches should surface immediately, not silently degrade to
 **Omit means "don't send this"—not just "we won't validate it."**
 
 When a schema has `additionalProperties: false` and a field is omitted:
+
 ```json
 {
   "additionalProperties": false,
@@ -118,6 +122,7 @@ If `dev.ucp.shopping.checkout` is the root capability, your extension schema sho
 ```
 
 The validator:
+
 1. Finds the root capability (no `extends`)
 2. Extracts `$defs[root_name]` from each extension
 3. Composes them with `allOf`
@@ -130,11 +135,11 @@ The validator:
 
 This is JSON Schema semantics. With `allOf`, ALL branches must validate:
 
-| Base | Extension | Result |
-|------|-----------|--------|
-| omit | required | required |
-| optional | required | required |
-| required | omit | **required** (base wins) |
-| required | optional | **required** (base wins) |
+| Base     | Extension | Result                   |
+| -------- | --------- | ------------------------ |
+| omit     | required  | required                 |
+| optional | required  | required                 |
+| required | omit      | **required** (base wins) |
+| required | optional  | **required** (base wins) |
 
 If the base schema says `id` is required, clients already depend on it. An extension can't hide it without breaking those clients. Extensions add requirements; they don't remove them.
